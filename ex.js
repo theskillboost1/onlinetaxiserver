@@ -5,7 +5,7 @@ const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
 
-const x="mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/"
+const x="mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
 // const DATABASE = process.x
 
 // const Cardata = require("Cardata")
