@@ -4,8 +4,7 @@ const app = express()
 const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
-const BASE_URL = process.env.BASE_URL
-const DATABASE = process.env.DATABASE
+
 // const Cardata = require("Cardata")
 
 
@@ -18,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(express.static('../client'))
 
-mongoose.connect('mongodb+srv://manpreet94560:LMzSCmifioHI0jKw@onlinetaxi.kmmze.mongodb.net/onlinetaxi')
+mongoose.connect('mongodb://localhost:27017/Onlinetaxi')
   .then(() => console.log('connected'))
   .catch((err) => console.log(err))
 
