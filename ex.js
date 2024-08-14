@@ -67,9 +67,9 @@ app.get('/roundtrip', (req, res) => {
     .catch((err) => res.json(err))
 })
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-})
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/index.html'));
+// })
 
 const UserSchema2 = new mongoose.Schema({
   Fromcity2: String,
