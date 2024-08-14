@@ -5,7 +5,8 @@ const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
 
-
+const x="mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/"
+// const DATABASE = process.x
 
 // const Cardata = require("Cardata")
 
@@ -19,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(express.static('../client'))
 
-mongoose.connect('mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi')
+mongoose.connect(`${x}`)
   .then(() => console.log('connected'))
   .catch((err) => console.log(err))
 
