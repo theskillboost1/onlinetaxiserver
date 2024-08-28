@@ -52,6 +52,7 @@ app.post("/create", (req,res)=>{
   .then((users) =>{ res.json(users)
       console.log(users)})
   .catch((err) => res.json(err))
+ 
 })
 
 app.get('/admin', function (req, res) {
