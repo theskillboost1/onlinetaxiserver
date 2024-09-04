@@ -4,6 +4,7 @@ const app = express()
 const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
+const twilio = require('twilio');
 
 const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
 // const DATABASE = process.x
@@ -47,12 +48,14 @@ app.get('/findcar', (req, res) => {
     .catch((err) => res.json(err))
 })
 
-app.post("/create", (req,res)=>{
+app.post("/create", (req, res) => {
   CarModel.create(req.body)
-  .then((users) =>{ res.json(users)
-      console.log(users)})
-  .catch((err) => res.json(err))
- 
+    .then((users) => {
+      res.json(users)
+      console.log(users)
+    })
+    .catch((err) => res.json(err))
+
 })
 
 app.get('/admin', function (req, res) {
@@ -84,14 +87,14 @@ app.put("/udoneway/:id", (req, res) => {
 app.delete("/delete/:id", (req, res) => {
   const id = req.params.id;
   CarModel.findByIdAndDelete(id)
-      .then((deletedCar) => {
-          if (deletedCar) {
-              res.json({ message: "Car deleted successfully", deletedCar });
-          } else {
-              res.status(404).json({ message: "Car not found" });
-          }
-      })
-      .catch((err) => res.status(500).json({ error: err.message }));
+    .then((deletedCar) => {
+      if (deletedCar) {
+        res.json({ message: "Car deleted successfully", deletedCar });
+      } else {
+        res.status(404).json({ message: "Car not found" });
+      }
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 
 
@@ -138,24 +141,26 @@ app.put("/udround/:id", (req, res) => {
     })
     .catch((err) => res.status(500).json({ success: false, error: err.message }));
 });
-app.post("/createround", (req,res)=>{
+app.post("/createround", (req, res) => {
   RoundModel.create(req.body)
-  .then((users) =>{ res.json(users)
-      console.log(users)})
-  .catch((err) => res.json(err))
+    .then((users) => {
+      res.json(users)
+      console.log(users)
+    })
+    .catch((err) => res.json(err))
 })
 
 app.delete("/deleteround/:id", (req, res) => {
   const id = req.params.id;
   RoundModel.findByIdAndDelete(id)
-      .then((deletedCar) => {
-          if (deletedCar) {
-              res.json({ message: "Car deleted successfully", deletedCar });
-          } else {
-              res.status(404).json({ message: "Car not found" });
-          }
-      })
-      .catch((err) => res.status(500).json({ error: err.message }));
+    .then((deletedCar) => {
+      if (deletedCar) {
+        res.json({ message: "Car deleted successfully", deletedCar });
+      } else {
+        res.status(404).json({ message: "Car not found" });
+      }
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 
 
@@ -236,34 +241,40 @@ app.put("/udhourly/:id", (req, res) => {
     })
     .catch((err) => res.status(500).json({ success: false, error: err.message }));
 });
-app.post("/createhourly", (req,res)=>{
+app.post("/createhourly", (req, res) => {
   HourlyModel.create(req.body)
-  .then((users) =>{ res.json(users)
-      console.log(users)})
-  .catch((err) => res.json(err))
+    .then((users) => {
+      res.json(users)
+      console.log(users)
+    })
+    .catch((err) => res.json(err))
+    
+    res.redirect('/admin.html');
 })
 
 app.delete("/deletehourly/:id", (req, res) => {
   const id = req.params.id;
   HourlyModel.findByIdAndDelete(id)
-      .then((deletedCar) => {
-          if (deletedCar) {
-              res.json({ message: "Car deleted successfully", deletedCar });
-          } else {
-              res.status(404).json({ message: "Car not found" });
-          }
-      })
-      .catch((err) => res.status(500).json({ error: err.message }));
+    .then((deletedCar) => {
+      if (deletedCar) {
+        res.json({ message: "Car deleted successfully", deletedCar });
+      } else {
+        res.status(404).json({ message: "Car not found" });
+      }
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 // Booking Form
 
 
-const BookingSchema = new mongoose.Schema({
+const BookingsSchema = new mongoose.Schema({
   Name: String,
   Phone: String,
   From: String,
   To: String,
-  Date: String,
+  Date1: String,
+  Date: String,  
+  Time: String,
   Address: String,
   Email: String
 })
@@ -274,7 +285,7 @@ app.get('/book', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/booking.html'));
 })
 
-const BookingModel = mongoose.model('Booking', BookingSchema)
+const BookingModel = mongoose.model('booking', BookingsSchema)
 
 
 app.post('/book/Bookform', (req, res) => {
@@ -284,12 +295,14 @@ app.post('/book/Bookform', (req, res) => {
     From: req.body.From,
     To: req.body.To,
     Date: req.body.Date,
+    Date1: req.body.Date1,
+    Time: req.body.Time,
     Address: req.body.Address,
     Email: req.body.Email
   })
 
   newBookModel.save()
-  res.redirect('/')
+  // res.redirect('../index.html')
 })
 
 
@@ -299,5 +312,22 @@ app.get('/findBookdata', (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err))
 })
+
+
+const accountSid = 'ACYOUR_TWILIO_ACCOUNT_SID';
+const authToken = 'YOUR_TWILIO_AUTH_TOKEN';
+const client = twilio(accountSid, authToken);
+
+app.post('/send-sms', (req, res) => {
+  const { mobileNumber, message } = req.body;
+
+  client.messages.create({
+    body: message || 'Your details have been received. Our team will contact you soon!',
+    from: 'YOUR_TWILIO_PHONE_NUMBER',
+    to: mobileNumber // User's mobile number
+  })
+    .then((message) => res.json({ success: true, messageSid: message.sid }))
+    .catch((error) => res.json({ success: false, error: error.message }));
+});
 
 app.listen(4040)
