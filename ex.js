@@ -4,7 +4,7 @@ const app = express()
 const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
-const twilio = require('twilio');
+// const twilio = require('twilio');
 
 const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
 // const DATABASE = process.x
@@ -314,20 +314,20 @@ app.get('/findBookdata', (req, res) => {
 })
 
 
-const accountSid = 'ACYOUR_TWILIO_ACCOUNT_SID';
-const authToken = 'YOUR_TWILIO_AUTH_TOKEN';
-const client = twilio(accountSid, authToken);
+// const accountSid = 'ACYOUR_TWILIO_ACCOUNT_SID';
+// const authToken = 'YOUR_TWILIO_AUTH_TOKEN';
+// const client = twilio(accountSid, authToken);
 
-app.post('/send-sms', (req, res) => {
-  const { mobileNumber, message } = req.body;
+// app.post('/send-sms', (req, res) => {
+//   const { mobileNumber, message } = req.body;
 
-  client.messages.create({
-    body: message || 'Your details have been received. Our team will contact you soon!',
-    from: 'YOUR_TWILIO_PHONE_NUMBER',
-    to: mobileNumber // User's mobile number
-  })
-    .then((message) => res.json({ success: true, messageSid: message.sid }))
-    .catch((error) => res.json({ success: false, error: error.message }));
-});
+//   client.messages.create({
+//     body: message || 'Your details have been received. Our team will contact you soon!',
+//     from: 'YOUR_TWILIO_PHONE_NUMBER',
+//     to: mobileNumber // User's mobile number
+//   })
+//     .then((message) => res.json({ success: true, messageSid: message.sid }))
+//     .catch((error) => res.json({ success: false, error: error.message }));
+// });
 
 app.listen(4040)
