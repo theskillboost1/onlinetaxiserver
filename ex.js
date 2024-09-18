@@ -298,7 +298,8 @@ app.post('/book/Bookform', (req, res) => {
     Date1: req.body.Date1,
     Time: req.body.Time,
     Address: req.body.Address,
-    Email: req.body.Email
+    Email: req.body.Email,
+    Route: req.body.Route
   })
 
   newBookModel.save()
