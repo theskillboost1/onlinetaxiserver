@@ -314,21 +314,124 @@ app.get('/findBookdata', (req, res) => {
     .catch((err) => res.json(err))
 })
 
+const Tourschema = new mongoose.Schema({
 
-// const accountSid = 'ACYOUR_TWILIO_ACCOUNT_SID';
-// const authToken = 'YOUR_TWILIO_AUTH_TOKEN';
-// const client = twilio(accountSid, authToken);
+  Route: String,
+  Fare: String,
+  DiscountPrice: Number,
+  MainPrice: Number,
+})
 
-// app.post('/send-sms', (req, res) => {
-//   const { mobileNumber, message } = req.body;
 
-//   client.messages.create({
-//     body: message || 'Your details have been received. Our team will contact you soon!',
-//     from: 'YOUR_TWILIO_PHONE_NUMBER',
-//     to: mobileNumber // User's mobile number
-//   })
-//     .then((message) => res.json({ success: true, messageSid: message.sid }))
-//     .catch((error) => res.json({ success: false, error: error.message }));
-// });
+const TourModel = mongoose.model('Toproute', Tourschema)
+app.get('/toproute', (req, res) => {
+  TourModel.find({})
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err))
+})
+
+app.put("/toproute/:id", (req, res) => {
+  const id = req.params.id;
+
+  console.log('Car ID:', id);
+  console.log('New Price:', req.body.DiscountPrice);
+
+  TourModel.findByIdAndUpdate(
+    id, // Pass the ID directly
+    { DiscountPrice: req.body.DiscountPrice, MainPrice : req.body.MainPrice, Route : req.body.Route }, // Use req.body.Price to update the price
+    { new: true } // Optionally return the updated document
+  )
+    .then((car) => {
+      if (car) {
+        res.json({ success: true, data: car });
+        // res.redirect('/admin')
+      } else {
+        res.status(404).json({ success: false, message: 'Route not found' });
+      }
+    })
+    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+});
+app.post("/createroute", (req, res) => {
+  TourModel.create(req.body)
+    .then((users) => {
+      res.json(users)
+      console.log(users)
+    })
+    .catch((err) => res.json(err))
+})
+
+app.delete("/deleteroute/:id", (req, res) => {
+  const id = req.params.id;
+  TourModel.findByIdAndDelete(id)
+    .then((deletedCar) => {
+      if (deletedCar) {
+        res.json({ message: "Route deleted successfully", deletedCar });
+      } else {
+        res.status(404).json({ message: "Route not found" });
+      }
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
+
+const BestTourschema = new mongoose.Schema({
+
+  TourCity: String,
+  TourDescription: String,
+  Review: String,
+  Price: Number,
+  Img:String,
+  Description:String
+})
+
+
+const BestTourModel = mongoose.model('Bestroute', BestTourschema)
+app.get('/bestroute', (req, res) => {
+  BestTourModel.find({})
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err))
+})
+
+app.put("/bestroute/:id", (req, res) => {
+  const id = req.params.id;
+
+  console.log('Car ID:', id);
+  console.log('New Price:', req.body.DiscountPrice);
+
+  BestTourModel.findByIdAndUpdate(
+    id, // Pass the ID directly
+    { TourCity: req.body.TourCity, TourDescription : req.body.TourDescription, Review : req.body.Review, Price : req.body.Price, Image : req.body.Image, Description : req.body.Description  }, // Use req.body.Price to update the price
+    { new: true } // Optionally return the updated document
+  )
+    .then((car) => {
+      if (car) {
+        res.json({ success: true, data: car });
+        // res.redirect('/admin')
+      } else {
+        res.status(404).json({ success: false, message: 'Route not found' });
+      }
+    })
+    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+});
+app.post("/createbestroute", (req, res) => {
+  BestTourModel.create(req.body)
+    .then((users) => {
+      res.json(users)
+      console.log(users)
+    })
+    .catch((err) => res.json(err))
+})
+
+app.delete("/deletebestroute/:id", (req, res) => {
+  const id = req.params.id;
+  BestTourModel.findByIdAndDelete(id)
+    .then((deletedCar) => {
+      if (deletedCar) {
+        res.json({ message: "Route deleted successfully", deletedCar });
+      } else {
+        res.status(404).json({ message: "Route not found" });
+      }
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
 
 app.listen(4040)
