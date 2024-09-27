@@ -4,6 +4,18 @@ const app = express()
 const cors = require('cors')
 const path = require('path');
 const bodyParser = require("body-parser")
+
+const multer = require('multer')
+const storage = multer.diskStorage({
+  destination: (req, file, cb)=>{
+    cb(null, './Images')
+  },
+  filename: (req, file, cb)=>{
+    console.log(file);
+    cb(null, Date.now()+ path.extname(file.originalname));
+  }
+})
+const upload = multer({storage:storage})
 // const twilio = require('twilio');
 
 const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
@@ -269,6 +281,7 @@ app.delete("/deletehourly/:id", (req, res) => {
 
 const BookingsSchema = new mongoose.Schema({
   Name: String,
+  Route:String,
   Phone: String,
   From: String,
   To: String,
@@ -276,7 +289,13 @@ const BookingsSchema = new mongoose.Schema({
   Date: String,  
   Time: String,
   Address: String,
-  Email: String
+  Email: String,
+  Price:Number,
+  CarNamee:String,
+  No:Number,
+  Email2:String,
+
+  
 })
 
 // multicity
@@ -299,7 +318,13 @@ app.post('/book/Bookform', (req, res) => {
     Time: req.body.Time,
     Address: req.body.Address,
     Email: req.body.Email,
-    Route: req.body.Route
+    Route: req.body.Route,
+    Price: req.body.Price,
+    CarNamee : req.body.CarNamee,
+    No : req.body.No,
+    Email2 : req.body.Email2,
+
+
   })
 
   newBookModel.save()
@@ -320,6 +345,7 @@ const Tourschema = new mongoose.Schema({
   Fare: String,
   DiscountPrice: Number,
   MainPrice: Number,
+  Image: String,
 })
 
 
@@ -330,35 +356,71 @@ app.get('/toproute', (req, res) => {
     .catch((err) => res.json(err))
 })
 
-app.put("/toproute/:id", (req, res) => {
+app.put("/toproute/:id", upload.single('Image'), (req, res) => {
   const id = req.params.id;
 
-  console.log('Car ID:', id);
-  console.log('New Price:', req.body.DiscountPrice);
+  console.log('Route ID:', id);
+  console.log('New Discount Price:', req.body.DiscountPrice);
+
+  // Prepare the update object
+  const updateData = {
+    DiscountPrice: req.body.DiscountPrice,
+    MainPrice: req.body.MainPrice,
+    Route: req.body.Route,
+  };
+
+  // Check if a new image is uploaded
+  if (req.file) {
+    updateData.Image = req.file.filename; // Update the image only if a new one is uploaded
+  }
 
   TourModel.findByIdAndUpdate(
-    id, // Pass the ID directly
-    { DiscountPrice: req.body.DiscountPrice, MainPrice : req.body.MainPrice, Route : req.body.Route }, // Use req.body.Price to update the price
-    { new: true } // Optionally return the updated document
+    id,
+    updateData,
+    { new: true } // Return the updated document
   )
-    .then((car) => {
-      if (car) {
-        res.json({ success: true, data: car });
-        // res.redirect('/admin')
+    .then((route) => {
+      if (route) {
+        res.json({ success: true, data: route });
       } else {
         res.status(404).json({ success: false, message: 'Route not found' });
       }
     })
     .catch((err) => res.status(500).json({ success: false, error: err.message }));
 });
-app.post("/createroute", (req, res) => {
-  TourModel.create(req.body)
-    .then((users) => {
-      res.json(users)
-      console.log(users)
+
+
+// app.post("/createroute",  (req, res) => {
+//   TourModel.create(req.body)
+//     .then((users) => {
+//       res.json(users)
+//       console.log(users)
+//     })
+//     .catch((err) => res.json(err))
+// })
+
+app.post('/createroute', upload.single('Image'), (req, res) => {
+  // Check if file is uploaded
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  const newRoute1 = new TourModel({
+    Route: req.body.Route,
+    Fare: req.body.Fare,
+    DiscountPrice: req.body.DiscountPrice,
+    MainPrice: req.body.MainPrice,
+    Image: req.file.filename, // Save the filename of the uploaded file
+  });
+
+  newRoute1
+    .save()
+    .then((route1) => {
+      res.json(route1);
+      console.log(route1);
     })
-    .catch((err) => res.json(err))
-})
+    .catch((err) => res.status(500).json(err));
+});
 
 app.delete("/deleteroute/:id", (req, res) => {
   const id = req.params.id;
@@ -373,53 +435,51 @@ app.delete("/deleteroute/:id", (req, res) => {
     .catch((err) => res.status(500).json({ error: err.message }));
 });
 
-const BestTourschema = new mongoose.Schema({
 
+const BestTourschema = new mongoose.Schema({
   TourCity: String,
   TourDescription: String,
   Review: String,
-  Price: Number,
-  Img:String,
-  Description:String
-})
+  Price: String,
+  Imageu: String,
+  Image1: String,
+  Description: String,
+});
+
+const BestTourModel = mongoose.model('Bestroute', BestTourschema);
 
 
-const BestTourModel = mongoose.model('Bestroute', BestTourschema)
+
+// GET request to retrieve all BestTour documents
 app.get('/bestroute', (req, res) => {
   BestTourModel.find({})
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err))
-})
-
-app.put("/bestroute/:id", (req, res) => {
-  const id = req.params.id;
-
-  console.log('Car ID:', id);
-  console.log('New Price:', req.body.DiscountPrice);
-
-  BestTourModel.findByIdAndUpdate(
-    id, // Pass the ID directly
-    { TourCity: req.body.TourCity, TourDescription : req.body.TourDescription, Review : req.body.Review, Price : req.body.Price, Image : req.body.Image, Description : req.body.Description  }, // Use req.body.Price to update the price
-    { new: true } // Optionally return the updated document
-  )
-    .then((car) => {
-      if (car) {
-        res.json({ success: true, data: car });
-        // res.redirect('/admin')
-      } else {
-        res.status(404).json({ success: false, message: 'Route not found' });
-      }
-    })
-    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+      .then((routes) => res.json(routes))
+      .catch((err) => res.json(err));
 });
-app.post("/createbestroute", (req, res) => {
-  BestTourModel.create(req.body)
-    .then((users) => {
-      res.json(users)
-      console.log(users)
-    })
-    .catch((err) => res.json(err))
-})
+
+// POST request to create a new BestTour document
+app.post('/createbestroute', upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), (req, res) => {
+  // Check if files are uploaded
+  if (!req.files || !req.files.Imageu || !req.files.Image1) {
+      return res.status(400).json({ success: false, message: 'Images are required' });
+  }
+
+  const price = req.body.Price.replace(/[^0-9]/g, ''); // Sanitize the price
+  const newRoute = new BestTourModel({
+      TourCity: req.body.TourCity,
+      TourDescription: req.body.TourDescription,
+      Review: req.body.Review,
+      Price: parseFloat(price),
+      Imageu: req.files.Imageu[0].filename, // Save the filename of the uploaded Imageu
+      Image1: req.files.Image1[0].filename, // Save the filename of the uploaded Image1
+      Description: req.body.Description,
+  });
+
+  newRoute.save()
+      .then((route) => res.status(201).json({ success: true, data: route }))
+      .catch((err) => res.status(500).json({ success: false, error: err.message }));
+});
+
 
 app.delete("/deletebestroute/:id", (req, res) => {
   const id = req.params.id;
@@ -433,5 +493,23 @@ app.delete("/deletebestroute/:id", (req, res) => {
     })
     .catch((err) => res.status(500).json({ error: err.message }));
 });
+
+
+app.get('/tourdetails/:id', (req, res) => {
+  const id = req.params.id;
+
+  BestTourModel.findById(id)  // Correct Mongoose query to fetch a document by ID
+      .then((tourDetails) => {
+          if (tourDetails) {
+              res.json(tourDetails);
+          } else {
+              res.status(404).json({ message: 'Tour not found' });
+          }
+      })
+      .catch((err) => {
+          res.status(500).json({ error: err.message });
+      });
+});
+
 
 app.listen(4040)
