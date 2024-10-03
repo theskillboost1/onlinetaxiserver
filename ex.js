@@ -33,12 +33,12 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, '../client')));
 
 // Serve the Images folder (this is the correct way)
-app.use('./Images', express.static(path.join(__dirname, 'Images')));
+app.use('/Images', express.static(path.join(__dirname, 'Images')));
 
 // Example route
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
 // app.get('/', (req, res) => {
 //   res.sendFile(path.join(__dirname, '../client/index.html'));
 // })
