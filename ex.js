@@ -8,7 +8,7 @@ const bodyParser = require("body-parser")
 const multer = require('multer')
 const storage = multer.diskStorage({
   destination: (req, file, cb)=>{
-    cb(null, './Images')
+    cb(null, './Image')
   },
   filename: (req, file, cb)=>{
     console.log(file);
@@ -30,15 +30,15 @@ app.use(cors())
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.use(express.static(path.join(__dirname, '../client')));
+// app.use(express.static(path.join(__dirname, '../client')));
 
 // Serve the Images folder (this is the correct way)
-app.use('/Images', express.static(path.join(__dirname, 'Images')));
+app.use('/Image', express.static(path.join(__dirname, 'Image')));
 
 // Example route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-});
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/index.html'));
+// });
 // app.get('/', (req, res) => {
 //   res.sendFile(path.join(__dirname, '../client/index.html'));
 // })
