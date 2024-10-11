@@ -316,8 +316,6 @@ app.get('/book', (req, res) => {
 
 const BookingModel = mongoose.model('booking', BookingsSchema)
 
-
-
 app.post('/book/Bookform', async (req, res) => {
   try {
     // Saving booking details in the database first
@@ -347,28 +345,54 @@ app.post('/book/Bookform', async (req, res) => {
     const to = savedBooking.To;
     const price = savedBooking.Price;
     const Order = savedBooking.No;
-    const PhoneN = savedBooking.Phone
-    const Date = savedBooking.Date
-    const Time = savedBooking.Time
-
-
+    const PhoneN = savedBooking.Phone;
+    const Date = savedBooking.Date;
+    const Time = savedBooking.Time;
+    const customerEmail = savedBooking.Email2;
 
     const message = `Your booking is successfully confirmed.\n` +
-      `Your Booking Order ID is ${Order}.\n` +
+      `Your Booking Order ID is STO${Order}.\n` +
       `${route} Booking with ${carName} car.\n` +
       ` ${from} to ${to} Booking Done.\n` +
-      ` Bookind Date : ${Date} Booking Time ${Time}.\n` +
+      ` Booking Date : ${Date} Booking Time ${Time}.\n` +
       `Just in ₹${price}.\n` +
       `Note: Toll/Tax Inc.\n` +
       `Parking Not Inc.`;
 
-
+    // Sending WhatsApp message
     await wbm.start({ showBrowser: true }).then(async () => {
       const phones = ['7707822378', `${PhoneN}`];
       await wbm.send(phones, message);
       await wbm.end();
     }).catch(err => console.log('Error in wbm:', err));
 
+    // Sending email
+    var nodemailer = require('nodemailer');
+
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'onlinetaxi09@gmail.com', 
+        pass: 'lxyw oinz nhts yeqf' 
+      }
+    });
+
+    var mailOptions = {
+      from: 'onlinetaxi09@gmail.com', 
+      to: customerEmail,
+      subject: 'Booking Confirmation',
+      text: message
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log('Error in sending email:', error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
+    res.status(200).json({ message: 'Booking confirmed, WhatsApp and email sent.' });
   } catch (error) {
     console.error('Error during message sending or saving booking:', error);
     res.status(500).json({ error: 'There was an error processing your request.' });
