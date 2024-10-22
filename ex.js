@@ -4,51 +4,37 @@ const app = express();
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require("body-parser");
-// const twilio = require("twilio");
-const wbm = require("wbm")
+const wbm = require("wbm");
+const multer = require('multer');
+const nodemailer = require('nodemailer');
 
-const multer = require('multer')
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './Image')
-  },
-  filename: (req, file, cb) => {
-    console.log(file);
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-})
-const upload = multer({ storage: storage })
-// const twilio = require('twilio');
+const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
 
-const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
-// const DATABASE = process.x
-
-// const Cardata = require("Cardata")
-
-
-app.use(express.json())
-app.use(cors())
-
-
-app.use(bodyParser.urlencoded({ extended: true }))
-
-// app.use(express.static(path.join(__dirname, '../client')));
-
-// Serve the Images folder (this is the correct way)
-app.use('/Image', express.static(path.join(__dirname, 'Image')));
-
-// Example route
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// });
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// })
-mongoose.connect(`${x}`)
+mongoose.connect(x)
   .then(() => console.log('connected'))
   .catch((err) => console.log(err))
 
-// cardata
+// Middlewares
+app.use(express.json());
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, '../client')));
+app.use('/Image', express.static(path.join(__dirname, 'Image'))); 
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './Image');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
+
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
 
 const Carschema = new mongoose.Schema({
 
@@ -196,30 +182,6 @@ const UserSchema2 = new mongoose.Schema({
   Person2: Number
 })
 
-// multicity
-
-const UserModel2 = mongoose.model('multicity', UserSchema2)
-
-
-app.post('/multicity', (req, res) => {
-  let newUserModel2 = new UserModel2({
-    Fromcity2: req.body.Fromcity2,
-    Tocity2: req.body.Tocity2,
-    Datee2: req.body.Datee2,
-    Contact2: req.body.Contact2,
-    Person2: req.body.Person2
-  })
-
-  newUserModel2.save()
-  res.redirect('/')
-})
-
-app.get('/findmulticity', (req, res) => {
-  UserModel2.find({})
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err))
-})
-
 
 // Hourly
 
@@ -308,7 +270,7 @@ const BookingsSchema = new mongoose.Schema({
 
 })
 
-// multicity
+
 
 app.get('/book', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/booking.html'));
@@ -350,24 +312,30 @@ app.post('/book/Bookform', async (req, res) => {
     const Time = savedBooking.Time;
     const customerEmail = savedBooking.Email2;
 
-    const message = `Your booking is successfully confirmed.\n` +
-      `Your Booking Order ID is STO${Order}.\n` +
-      `${route} Booking with ${carName} car.\n` +
-      ` ${from} to ${to} Booking Done.\n` +
-      ` Booking Date : ${Date} Booking Time ${Time}.\n` +
-      `Just in ₹${price}.\n` +
-      `Note: Toll/Tax Inc.\n` +
-      `Parking Not Inc.`;
+    const message = 
+   `Your booking is successfully confirmed!\n` +
+    `We are excited to serve you!\n` +
+    `Your Booking Order ID is STO${Order}.\n` +
+    `Name: ${customerName}.\n` +
+    `Number: ${PhoneN}.\n` +
+    `${route} Booking with our comfortable ${carName} car.\n` +
+    `${from} to ${to} Booking Done.\n` +
+    `Booking Date: ${Date} | Booking Time: ${Time}.\n` +
+    `All set for just ₹${price}.\n` +
+    `Enjoy a smooth and safe ride ahead!\n` +
+    `Note: Toll/Tax Included. Parking not included.\n` +
+    `Thank you for choosing us. We value your trust!\n`+
+    `Regards\n`+
+    `Online Taxi\n`+
 
-    // Sending WhatsApp message
+    
     await wbm.start({ showBrowser: true }).then(async () => {
       const phones = ['7707822378', `${PhoneN}`];
       await wbm.send(phones, message);
       await wbm.end();
     }).catch(err => console.log('Error in wbm:', err));
 
-    // Sending email
-    var nodemailer = require('nodemailer');
+   
 
     var transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -380,6 +348,7 @@ app.post('/book/Bookform', async (req, res) => {
     var mailOptions = {
       from: 'onlinetaxi09@gmail.com', 
       to: customerEmail,
+      to: 'sidhutravelcompany@gmail.com',
       subject: 'Booking Confirmation',
       text: message
     };
@@ -392,7 +361,7 @@ app.post('/book/Bookform', async (req, res) => {
       }
     });
 
-    res.status(200).json({ message: 'Booking confirmed, WhatsApp and email sent.' });
+   
   } catch (error) {
     console.error('Error during message sending or saving booking:', error);
     res.status(500).json({ error: 'There was an error processing your request.' });
@@ -440,7 +409,7 @@ app.put("/toproute/:id", upload.single('Image'), (req, res) => {
   if (req.file) {
     updateData.Image = req.file.filename; 
   }
-
+ 
   TourModel.findByIdAndUpdate(
     id,
     updateData,
@@ -521,19 +490,56 @@ app.post('/createbestroute', upload.fields([{ name: 'Imageu', maxCount: 1 }, { n
     return res.status(400).json({ success: false, message: 'Images are required' });
   }
 
-  const price = req.body.Price.replace(/[^0-9]/g, ''); 
+  // Continue with your logic to save data or respond
   const newRoute = new BestTourModel({
     TourCity: req.body.TourCity,
     TourDescription: req.body.TourDescription,
     Review: req.body.Review,
-    Price: parseFloat(price),
-    Imageu: req.files.Imageu[0].filename, 
-    Image1: req.files.Image1[0].filename, 
+    Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')),
+    Imageu: req.files.Imageu[0].filename,
+    Image1: req.files.Image1[0].filename,
     Description: req.body.Description,
   });
 
   newRoute.save()
     .then((route) => res.status(201).json({ success: true, data: route }))
+    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+});
+
+app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), (req, res) => {
+  const id = req.params.id;
+
+  console.log('Route ID:', id);
+  console.log('New Discount Price:', req.body.DiscountPrice);
+
+  const updateData = {
+    TourCity: req.body.TourCity,
+    TourDescription: req.body.TourDescription,
+    Review: req.body.Review,
+    Price: req.body.Price,
+    Description: req.body.Description,
+  };
+
+  if (req.files && req.files.Imageu) {
+    updateData.Imageu = req.files.Imageu[0].filename;
+  }
+
+  if (req.files && req.files.Image1) {
+    updateData.Image1 = req.files.Image1[0].filename;
+  }
+
+  BestTourModel.findByIdAndUpdate(
+    id,
+    updateData,
+    { new: true } 
+  )
+    .then((route) => {
+      if (route) {
+        res.json({ success: true, data: route });
+      } else {
+        res.status(404).json({ success: false, message: 'Route not found' });
+      }
+    })
     .catch((err) => res.status(500).json({ success: false, error: err.message }));
 });
 
