@@ -18,7 +18,9 @@ mongoose.connect(x)
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(express.static(path.join(__dirname, '../client')));
+
 app.use('/Image', express.static(path.join(__dirname, 'Image'))); 
 
 const storage = multer.diskStorage({
@@ -31,10 +33,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-});
+
 
 const Carschema = new mongoose.Schema({
 
