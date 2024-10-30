@@ -1,34 +1,51 @@
 const mongoose = require('mongoose');
 const express = require('express');
-const app = express();
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require("body-parser");
-const wbm = require("wbm");
+const fs = require('fs');
 const multer = require('multer');
-const nodemailer = require('nodemailer');
 
+const app = express();
 const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
 
 mongoose.connect(x)
   .then(() => console.log('connected'))
-  .catch((err) => console.log(err))
+  .catch((err) => console.log(err));
 
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(express.static(path.join(__dirname, '../client')));
-app.use('/Image', express.static(path.join(__dirname, 'Image'))); 
+
+const imageDir = path.join(__dirname, 'Image');
+if (!fs.existsSync(imageDir)) {
+  fs.mkdirSync(imageDir);
+}
+
+app.use('/Image', express.static(imageDir)); 
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './Image');
+    cb(null, imageDir);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage: storage });
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif/; 
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Invalid file type. Only JPEG, PNG, and GIF files are allowed.'));
+  }
+});
 
 // Routes
 // app.get('/', (req, res) => {
