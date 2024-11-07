@@ -11,30 +11,26 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 require('dotenv').config();
 
-// AWS S3 Configuration
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
   region: process.env.AWS_REGION
 });
 
-// Ensure the image directory exists
 const imageDir = path.join(__dirname, 'Image');
 if (!fs.existsSync(imageDir)) {
-  fs.mkdirSync(imageDir);  // Ensure the directory exists
+  fs.mkdirSync(imageDir); 
 }
 
-// Multer S3 Storage Configuration
 const storage = multerS3({
   s3: s3,
-  bucket: 'your-bucket-name', // Replace with your actual bucket name
-  acl: 'public-read',  // Image should be publicly accessible
+  bucket: 'your-bucket-name', 
+  acl: 'public-read',  
   key: (req, file, cb) => {
-    cb(null, Date.now().toString() + path.extname(file.originalname));  // Unique file name
+    cb(null, Date.now().toString() + path.extname(file.originalname));  
   }
 });
 
-// Multer file filter
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -48,10 +44,9 @@ const upload = multer({
   }
 });
 
-// MongoDB connection
-const x = process.env.MONGO_URI; // It's safer to store the DB URI in .env
+const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority"
 mongoose.connect(x)
-  .then(() => console.log('MongoDB connected'))
+  .then(() => console.log('connected'))
   .catch((err) => console.log('MongoDB connection error:', err));
 
 app.use(express.json());
@@ -60,9 +55,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../client')));
 
 // Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
-});
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/index.html'));
+// });
 
 const Carschema = new mongoose.Schema({
 
