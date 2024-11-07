@@ -1,56 +1,68 @@
 const mongoose = require('mongoose');
 const express = require('express');
+const app = express();
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require("body-parser");
-const fs = require('fs');
 const multer = require('multer');
+const nodemailer = require('nodemailer');
+const multerS3 = require('multer-s3');
+const AWS = require('aws-sdk');
+const fs = require('fs');
+require('dotenv').config();
 
-const app = express();
-const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
+// AWS S3 Configuration
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
+  region: process.env.AWS_REGION
+});
 
+// Ensure the image directory exists
+const imageDir = path.join(__dirname, 'Image');
+if (!fs.existsSync(imageDir)) {
+  fs.mkdirSync(imageDir);  // Ensure the directory exists
+}
+
+// Multer S3 Storage Configuration
+const storage = multerS3({
+  s3: s3,
+  bucket: 'your-bucket-name', // Replace with your actual bucket name
+  acl: 'public-read',  // Image should be publicly accessible
+  key: (req, file, cb) => {
+    cb(null, Date.now().toString() + path.extname(file.originalname));  // Unique file name
+  }
+});
+
+// Multer file filter
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const isValid = allowedTypes.test(file.mimetype) && allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (isValid) {
+      return cb(null, true);
+    }
+    return cb(new Error('Invalid file type. Only JPEG, PNG, and GIF files are allowed.'));
+  }
+});
+
+// MongoDB connection
+const x = process.env.MONGO_URI; // It's safer to store the DB URI in .env
 mongoose.connect(x)
-  .then(() => console.log('connected'))
-  .catch((err) => console.log(err));
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.log('MongoDB connection error:', err));
 
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-const imageDir = path.join(__dirname, 'Image');
-if (!fs.existsSync(imageDir)) {
-  fs.mkdirSync(imageDir);
-}
-
-app.use('/Image', express.static(imageDir)); 
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, imageDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/; 
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('Invalid file type. Only JPEG, PNG, and GIF files are allowed.'));
-  }
-});
+app.use(express.static(path.join(__dirname, '../client')));
 
 // Routes
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
 
 const Carschema = new mongoose.Schema({
 
