@@ -15,7 +15,7 @@ const app = express();
 const username = 'manpreet94560'; 
 const repo = 'project';  
 const branch = 'main';
-const token = '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'; // Store this securely
+const token = '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'; // Store this securely
 
 // MongoDB connection string
 const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
