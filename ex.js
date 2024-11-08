@@ -1,34 +1,100 @@
-const mongoose = require('mongoose');
 const express = require('express');
-const app = express();
+const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require("body-parser");
-const wbm = require("wbm");
 const multer = require('multer');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
-const x = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
 
-mongoose.connect(x)
-  .then(() => console.log('connected'))
-  .catch((err) => console.log(err))
+// Initialize Express app
+const app = express();
 
+
+// GitHub credentials and repository details
+const username = 'manpreet94560'; 
+const repo = 'project';  
+const branch = 'main';
+const token = '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'; // Store this securely
+
+// MongoDB connection string
+const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
+mongoose.connect(dbURI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.log('MongoDB connection error:', err));
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(express.static(path.join(__dirname, '../client')));
-app.use('/Image', express.static(path.join(__dirname, 'Image'))); 
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './Image');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
+// Serve static files from the 'client' directory
+// app.use(express.static(path.join(__dirname, '../client')));
+
+// Set up image upload destination using multer.memoryStorage
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+const uploadImageToGitHub = async (file) => {
+  try {
+    // Sanitize filename to avoid any issues with GitHub (optional)
+    const fileName = file.originalname.replace(/\s+/g, '-'); // Replaces spaces with hyphens
+    const base64Image = file.buffer.toString('base64'); // Convert the image buffer to base64 string
+
+    const repoFilePath = `Image/${fileName}`; // Folder on GitHub where the image will be uploaded
+
+    // GitHub API URL to check if the file already exists
+    const checkFileApiUrl = `https://api.github.com/repos/${username}/${repo}/contents/${repoFilePath}`;
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      // Check if the file exists by calling the GitHub API
+      const existingFileResponse = await axios.get(checkFileApiUrl, { headers });
+
+      // If the file exists, we need the SHA to update it
+      const sha = existingFileResponse.data.sha;
+
+      // Prepare the data to update the file on GitHub
+      const data = {
+        message: `Update image ${fileName}`,
+        content: base64Image,
+        branch: branch,
+        sha: sha // Include the sha of the existing file
+      };
+
+      // Make the PUT request to update the image
+      const uploadResponse = await axios.put(checkFileApiUrl, data, { headers });
+      return uploadResponse.data;
+
+    } catch (error) {
+      // If the file doesn't exist (404 error), proceed to upload the file
+      if (error.response && error.response.status === 404) {
+        // Prepare the data to create the new file on GitHub
+        const data = {
+          message: `Upload image ${fileName}`,
+          content: base64Image,
+          branch: branch
+        };
+
+        // Make the PUT request to upload the new image
+        const uploadResponse = await axios.put(checkFileApiUrl, data, { headers });
+        return uploadResponse.data;
+      }
+
+      // If another error occurred, log and throw it
+      console.error('Error checking file existence:', error.response ? error.response.data : error.message);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error uploading image:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
 // Routes
 // app.get('/', (req, res) => {
 //   res.sendFile(path.join(__dirname, '../client/index.html'));
@@ -358,91 +424,116 @@ app.get('/findBookdata', (req, res) => {
 })
 
 const Tourschema = new mongoose.Schema({
-
   Route: String,
   Fare: String,
   DiscountPrice: Number,
   MainPrice: Number,
-  Image: String,
-})
-
-
-const TourModel = mongoose.model('Toproute', Tourschema)
-app.get('/toproute', (req, res) => {
-  TourModel.find({})
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err))
-})
-
-app.put("/toproute/:id", upload.single('Image'), (req, res) => {
-  const id = req.params.id;
-
-  console.log('Route ID:', id);
-  console.log('New Discount Price:', req.body.DiscountPrice);
-
-  // Prepare the update object
-  const updateData = {
-    DiscountPrice: req.body.DiscountPrice,
-    MainPrice: req.body.MainPrice,
-    Route: req.body.Route,
-  };
-
-  if (req.file) {
-    updateData.Image = req.file.filename; 
-  }
- 
-  TourModel.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true } 
-  )
-    .then((route) => {
-      if (route) {
-        res.json({ success: true, data: route });
-      } else {
-        res.status(404).json({ success: false, message: 'Route not found' });
-      }
-    })
-    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+  Image: String, // Image stored as a filename
 });
 
+const TourModel = mongoose.model('Toproute', Tourschema);
 
-
-app.post('/createroute', upload.single('Image'), (req, res) => {
+// Route to handle image uploads and also upload to GitHub
+app.post('/upload-image', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const newRoute1 = new TourModel({
+  try {
+    // Upload the image to GitHub
+    const uploadResponse = await uploadImageToGitHub(req.file);
+    res.json({ success: true, message: 'Image uploaded successfully', data: uploadResponse });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error uploading image', error: error.message });
+  }
+});
+
+// Route to fetch all routes
+app.get('/toproute', (req, res) => {
+  TourModel.find({})
+    .then((routes) => res.json(routes))
+    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+});
+
+// Route to create a new route with image upload
+app.post('/createroute', upload.single('Image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No image file uploaded' });
+  }
+
+  const newRoute = new TourModel({
     Route: req.body.Route,
     Fare: req.body.Fare,
     DiscountPrice: req.body.DiscountPrice,
     MainPrice: req.body.MainPrice,
-    Image: req.file.filename,
+    Image: req.file.originalname, // Use the same name as the uploaded file
   });
 
-  newRoute1
-    .save()
-    .then((route1) => {
-      res.json(route1);
-      console.log(route1);
+  newRoute.save()
+    .then(route => {
+      const file = req.file;
+      uploadImageToGitHub(file)
+        .then(() => {
+          res.json({ success: true, route });
+        })
+        .catch(error => {
+          console.error('Error uploading image to GitHub:', error);
+          res.status(500).json({ success: false, message: 'Failed to upload image to GitHub', error });
+        });
     })
-    .catch((err) => res.status(500).json(err));
+    .catch(err => res.status(500).json({ success: false, error: err.message }));
 });
 
+// Route to update an existing route (PUT method)
+app.put('/toproute/:id', upload.single('Image'), (req, res) => {
+  const id = req.params.id;
+  const updateData = {
+    Route: req.body.Route,
+    Fare: req.body.Fare,
+    DiscountPrice: req.body.DiscountPrice,
+    MainPrice: req.body.MainPrice,
+  };
+
+  if (req.file) {
+    updateData.Image = req.file.originalname;  // Use the same image name
+  }
+
+  TourModel.findByIdAndUpdate(id, updateData, { new: true })
+    .then(route => {
+      if (route) {
+        if (req.file) {
+          const file = req.file;
+          uploadImageToGitHub(file)
+            .then(() => {
+              res.json({ success: true, route });
+            })
+            .catch(error => {
+              console.error('Error uploading image to GitHub:', error);
+              res.status(500).json({ success: false, message: 'Failed to upload image to GitHub', error });
+            });
+        } else {
+          res.json({ success: true, route });
+        }
+      } else {
+        res.status(404).json({ success: false, message: 'Route not found' });
+      }
+    })
+    .catch(err => res.status(500).json({ success: false, error: err.message }));
+});
+
+// Route to delete a route (DELETE method)
 app.delete("/deleteroute/:id", (req, res) => {
   const id = req.params.id;
   TourModel.findByIdAndDelete(id)
-    .then((deletedCar) => {
-      if (deletedCar) {
-        res.json({ message: "Route deleted successfully", deletedCar });
+    .then(deletedRoute => {
+      if (deletedRoute) {
+        res.json({ message: "Route deleted successfully", deletedRoute });
       } else {
         res.status(404).json({ message: "Route not found" });
       }
     })
-    .catch((err) => res.status(500).json({ error: err.message }));
+    .catch(err => res.status(500).json({ error: err.message }));
 });
-
 
 const BestTourschema = new mongoose.Schema({
   TourCity: String,
@@ -464,31 +555,45 @@ app.get('/bestroute', (req, res) => {
     .catch((err) => res.json(err));
 });
 
-app.post('/createbestroute', upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), (req, res) => {
+app.post('/createbestroute', upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), async (req, res) => {
   if (!req.files || !req.files.Imageu || !req.files.Image1) {
     return res.status(400).json({ success: false, message: 'Images are required' });
   }
 
-  const newRoute = new BestTourModel({
-    TourCity: req.body.TourCity,
-    TourDescription: req.body.TourDescription,
-    Review: req.body.Review,
-    Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')),
-    Imageu: req.files.Imageu[0].filename,
-    Image1: req.files.Image1[0].filename,
-    Description: req.body.Description,
-  });
+  try {
+    // Prepare the image upload promises for both images
+    const imageUploadPromises = [
+      uploadImageToGitHub(req.files.Imageu[0]),  // Upload first image to GitHub
+      uploadImageToGitHub(req.files.Image1[0])   // Upload second image to GitHub
+    ];
 
-  newRoute.save()
-    .then((route) => res.status(201).json({ success: true, data: route }))
-    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+    // Wait for both image uploads to complete
+    await Promise.all(imageUploadPromises);
+
+    // Create the new route and save the details in MongoDB
+    const newRoute = new BestTourModel({
+      TourCity: req.body.TourCity,
+      TourDescription: req.body.TourDescription,
+      Review: req.body.Review,
+      Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')),  // Ensure only numbers are included
+      Imageu: req.files.Imageu[0].originalname,  // Save original file name in MongoDB
+      Image1: req.files.Image1[0].originalname,  // Save original file name in MongoDB
+      Description: req.body.Description,
+    });
+
+    // Save the route in the database
+    const route = await newRoute.save();
+
+    res.status(201).json({ success: true, data: route });
+  } catch (error) {
+    console.error('Error creating BestTour route:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to upload images to GitHub or save route data', error: error.message });
+  }
 });
 
-app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), (req, res) => {
-  const id = req.params.id;
 
-  console.log('Route ID:', id);
-  console.log('New Discount Price:', req.body.DiscountPrice);
+app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), async (req, res) => {
+  const id = req.params.id;
 
   const updateData = {
     TourCity: req.body.TourCity,
@@ -499,26 +604,41 @@ app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name
   };
 
   if (req.files && req.files.Imageu) {
-    updateData.Imageu = req.files.Imageu[0].filename;
+    updateData.Imageu = req.files.Imageu[0].originalname;  // Save the original filename in MongoDB
   }
 
   if (req.files && req.files.Image1) {
-    updateData.Image1 = req.files.Image1[0].filename;
+    updateData.Image1 = req.files.Image1[0].originalname;  // Save the original filename in MongoDB
   }
 
-  BestTourModel.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true } 
-  )
-    .then((route) => {
-      if (route) {
-        res.json({ success: true, data: route });
-      } else {
-        res.status(404).json({ success: false, message: 'Route not found' });
+  try {
+    // Update the BestTour route in the database
+    const route = await BestTourModel.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (route) {
+      // Upload the images to GitHub after the update
+      const imageUploadPromises = [];
+
+      if (req.files && req.files.Imageu) {
+        imageUploadPromises.push(uploadImageToGitHub(req.files.Imageu[0]));  // Upload first image
       }
-    })
-    .catch((err) => res.status(500).json({ success: false, error: err.message }));
+
+      if (req.files && req.files.Image1) {
+        imageUploadPromises.push(uploadImageToGitHub(req.files.Image1[0]));  // Upload second image
+      }
+
+      // Wait for the images to be uploaded
+      await Promise.all(imageUploadPromises);
+
+      // Return the updated route data as a response
+      res.json({ success: true, data: route });
+    } else {
+      res.status(404).json({ success: false, message: 'Route not found' });
+    }
+  } catch (error) {
+    console.error('Error updating BestTour route:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to upload images to GitHub or update route data', error: error.message });
+  }
 });
 
 
