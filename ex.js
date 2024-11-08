@@ -29,7 +29,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files from the 'client' directory
-// app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, '../client')));
 
 // Set up image upload destination using multer.memoryStorage
 const storage = multer.memoryStorage();
