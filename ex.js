@@ -15,7 +15,7 @@ const app = express();
 const username = 'manpreet94560'; 
 const repo = 'project';  
 const branch = 'main';
-const token = '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'; // Store this securely
+const token = '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'; // Store this securely
 
 // MongoDB connection string
 const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
@@ -23,12 +23,12 @@ mongoose.connect(dbURI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error:', err));
 
-// Middleware
+
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the 'client' directory
+
 app.use(express.static(path.join(__dirname, '../client')));
 
 // Set up image upload destination using multer.memoryStorage
