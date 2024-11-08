@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const multer = require('multer');
 const axios = require('axios');
 
-
+require('dotenv').config();
 // Initialize Express app
 const app = express();
 
@@ -15,7 +15,7 @@ const app = express();
 const username = 'manpreet94560'; 
 const repo = 'project';  
 const branch = 'main';
-const token = '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'; // Store this securely
+const token = process.env.Git_Token
 
 // MongoDB connection string
 const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
