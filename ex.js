@@ -15,7 +15,7 @@ const app = express();
 const username = 'manpreet94560'; 
 const repo = 'project';  
 const branch = 'main';
-const token = process.env.Git_Token
+const token = process.env.GITHUB_TOKEN;
 
 // MongoDB connection string
 const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
