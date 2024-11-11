@@ -5,6 +5,8 @@ const path = require('path');
 const bodyParser = require("body-parser");
 const multer = require('multer');
 const axios = require('axios');
+const nodemailer = require('nodemailer')
+
 
 require('dotenv').config();
 // Initialize Express app
@@ -49,7 +51,7 @@ const uploadImageToGitHub = async (file) => {
     const headers = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
-    };
+    }; 
 
     try {
       // Check if the file exists by calling the GitHub API
