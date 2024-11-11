@@ -9,11 +9,8 @@ const nodemailer = require('nodemailer')
 
 
 require('dotenv').config();
-// Initialize Express app
 const app = express();
 
-
-// GitHub credentials and repository details
 const username = 'manpreet94560'; 
 const repo = 'project';  
 const branch = 'main';
