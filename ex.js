@@ -9,13 +9,14 @@ const nodemailer = require('nodemailer')
 
 require('dotenv').config();
 const app = express();
-const username = 'manpreet94560'; 
-const repo = 'project';  
+const username = 'manpreet94560';
+const repo = 'project';
 const branch = 'main';
-const token = process.env.GITHUB_TOKEN; 
+const token = process.env.GITHUB_TOKEN;
 
 // MongoDB connection string
 const dbURI = "mongodb+srv://manpreet94560:preet123@onlinetaxicluster.fgas8.mongodb.net/Onlinetaxi?retryWrites=true&w=majority";
+
 mongoose.connect(dbURI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error:', err));
@@ -51,7 +52,7 @@ const uploadImageToGitHub = async (file) => {
         message: `Update image ${fileName}`,
         content: base64Image,
         branch: branch,
-        sha: sha 
+        sha: sha
       };
 
       const uploadResponse = await axios.put(checkFileApiUrl, data, { headers });
@@ -78,9 +79,9 @@ const uploadImageToGitHub = async (file) => {
 };
 
 // Routes
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
 
 const Carschema = new mongoose.Schema({
 
@@ -92,6 +93,7 @@ const Carschema = new mongoose.Schema({
   Luggage: Number,
   Seats: Number,
   Price: Number,
+  Imgg: String,
 })
 
 
@@ -123,8 +125,8 @@ app.put("/udoneway/:id", (req, res) => {
   console.log('New Price:', req.body.Price);
 
   CarModel.findByIdAndUpdate(
-    id, 
-    { Price: req.body.Price }, 
+    id,
+    { Price: req.body.Price },
     { new: true }
   )
     .then((car) => {
@@ -137,6 +139,7 @@ app.put("/udoneway/:id", (req, res) => {
     .catch((err) => res.status(500).json({ success: false, error: err.message }));
 });
 
+
 app.put("/updatePrice", (req, res) => {
   let percentage = req.body.Percentage;
   percentage = parseFloat(percentage);
@@ -147,12 +150,12 @@ app.put("/updatePrice", (req, res) => {
   const multiplier = percentage >= 0 ? 1 + (percentage / 100) : 1 - (Math.abs(percentage) / 100);
   console.log("Multiplier:", multiplier);
   CarModel.updateMany(
-    {}, 
+    {},
     [
       {
         $set: {
           Price: {
-            $round: [{ $multiply: ["$Price", multiplier] }, 0]  
+            $round: [{ $multiply: ["$Price", multiplier] }, 0]
           }
         }
       }
@@ -214,9 +217,9 @@ app.put("/udround/:id", (req, res) => {
   console.log('New Price:', req.body.Price);
 
   RoundModel.findByIdAndUpdate(
-    id, 
+    id,
     { Price: req.body.Price },
-    { new: true } 
+    { new: true }
   )
     .then((car) => {
       if (car) {
@@ -238,12 +241,12 @@ app.put("/updatePriceRound", (req, res) => {
   const multiplier = percentage >= 0 ? 1 + (percentage / 100) : 1 - (Math.abs(percentage) / 100);
   console.log("Multiplier:", multiplier);
   RoundModel.updateMany(
-    {}, 
+    {},
     [
       {
         $set: {
           Price: {
-            $round: [{ $multiply: ["$Price", multiplier] }, 0]  
+            $round: [{ $multiply: ["$Price", multiplier] }, 0]
           }
         }
       }
@@ -349,12 +352,12 @@ app.put("/updatePriceHourly", (req, res) => {
   const multiplier = percentage >= 0 ? 1 + (percentage / 100) : 1 - (Math.abs(percentage) / 100);
   console.log("Multiplier:", multiplier);
   HourlyModel.updateMany(
-    {}, 
+    {},
     [
       {
         $set: {
           Price: {
-            $round: [{ $multiply: ["$Price", multiplier] }, 0]  
+            $round: [{ $multiply: ["$Price", multiplier] }, 0]
           }
         }
       }
@@ -477,16 +480,16 @@ app.post('/Bookform', async (req, res) => {
     var transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'onlinetaxi09@gmail.com', 
+        user: 'onlinetaxi09@gmail.com',
         pass: 'lxyw oinz nhts yeqf'
       }
     });
 
     var mailOptions = {
-      from: 'onlinetaxi09@gmail.com', 
+      from: 'onlinetaxi09@gmail.com',
       to: [customerEmail, 'onlinetaxi09@gmail.com'],
       subject: 'Booking Confirmation',
-      html: messageHtml 
+      html: messageHtml
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
@@ -515,7 +518,8 @@ const Tourschema = new mongoose.Schema({
   Fare: String,
   DiscountPrice: Number,
   MainPrice: Number,
-  Image: String, // Image stored as a filename
+  Path:String,
+  Image: String, 
 });
 
 const TourModel = mongoose.model('Toproute', Tourschema);
@@ -549,7 +553,7 @@ app.post('/createroute', upload.single('Image'), (req, res) => {
     Route: req.body.Route,
     Fare: req.body.Fare,
     DiscountPrice: req.body.DiscountPrice,
-    MainPrice: req.body.MainPrice,
+    MainPrice: req.body.MainPrice,    
     Image: req.file.originalname, // Use the same name as the uploaded file
   });
 
@@ -623,14 +627,16 @@ const BestTourschema = new mongoose.Schema({
   TourCity: String,
   TourDescription: String,
   Review: String,
-  Price: Number,  
-  Imageu: String,
+  Price: Number,
+  Tourno:{ type: String, required: true }, 
+  Path:String,
+  // Imageu: String,
   Image1: String,
-  Description: String,
-  DaysData: [{  
-    heading: String,
-    description: String
-  }]
+  // Description: String,
+  // DaysData: [{
+  //   heading: String,
+  //   description: String
+  // }]
 });
 
 const BestTourModel = mongoose.model('Bestroute', BestTourschema);
@@ -644,51 +650,48 @@ app.get('/bestroute', (req, res) => {
     .catch((err) => res.json(err));
 });
 
-app.post('/createbestroute', upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), async (req, res) => {
-  console.log('Request files:', req.files);  // Debugging the file upload
-  if (!req.files || !req.files.Imageu || !req.files.Image1) {
-    return res.status(400).json({ success: false, message: 'Images are required' });
+app.post('/createbestroute', upload.single('Image1'), async (req, res) => {
+  console.log('Request file:', req.file);  // Debugging the file upload
+
+  // Check if Image1 is uploaded
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'Image1 is required' });
   }
 
   try {
-    const imageUploadPromises = [
-      uploadImageToGitHub(req.files.Imageu[0]),  
-      uploadImageToGitHub(req.files.Image1[0])   
-    ];
-
-    await Promise.all(imageUploadPromises);
-
-    // Parsing DaysData (submitted from frontend) into an array
-    let daysData = [];
-    if (req.body.DaysData) {
-      try {
-        daysData = JSON.parse(req.body.DaysData); // Parse the DaysData JSON string into an object
-      } catch (e) {
-        return res.status(400).json({ success: false, message: 'Invalid DaysData format' });
-      }
+    // Ensure Price is a valid number
+    const price = parseFloat(req.body.Price.replace(/[^0-9]/g, ''));
+    if (isNaN(price)) {
+      return res.status(400).json({ success: false, message: 'Invalid price format' });
     }
 
+    // Create a new route entry
     const newRoute = new BestTourModel({
       TourCity: req.body.TourCity,
       TourDescription: req.body.TourDescription,
       Review: req.body.Review,
-      Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')),  // Ensure price is cleaned and parsed correctly
-      Imageu: req.files.Imageu[0].originalname,  
-      Image1: req.files.Image1[0].originalname,  
-      Description: req.body.Description,
-      DaysData: daysData,  // Include the days data
+      Tourno: req.body.Tourno,
+      Path:req.body.Path,
+      Price: price,  // Ensure price is cleaned and parsed correctly
+      Image1: req.file.originalname,  // Only use Image1
+      // Description: req.body.Description,
     });
 
+    // Save the new route to the database
     const route = await newRoute.save();
 
+    // Send success response
     res.status(201).json({ success: true, data: route });
+
   } catch (error) {
+    // Catch and log errors
     console.error('Error creating BestTour route:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to upload images to GitHub or save route data', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to upload image or save route data', error: error.message });
   }
 });
 
-app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name: 'Image1', maxCount: 1 }]), async (req, res) => {
+
+app.put("/bestroute/:id", upload.single('Image1'), async (req, res) => {
   const id = req.params.id;
 
   // Prepare the data to be updated
@@ -696,47 +699,22 @@ app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name
     TourCity: req.body.TourCity,
     TourDescription: req.body.TourDescription,
     Review: req.body.Review,
-    Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')), 
+    Tourno: req.body.Tourno,
+    Path: req.body.Path,
+    Price: parseFloat(req.body.Price.replace(/[^0-9]/g, '')),
     Description: req.body.Description,
   };
 
-  if (req.files && req.files.Imageu) {
-    updateData.Imageu = req.files.Imageu[0].originalname;  
+  // Only handle Image1 if it's uploaded
+  if (req.file) {
+    updateData.Image1 = req.file.originalname;
   }
-
-  if (req.files && req.files.Image1) {
-    updateData.Image1 = req.files.Image1[0].originalname;  
-  }
-
-  let daysData = [];
-  if (req.body.DaysData) {
-    try {
-      daysData = JSON.parse(req.body.DaysData);
-    } catch (e) {
-      return res.status(400).json({ success: false, message: 'Invalid DaysData format' });
-    }
-  }
-  updateData.DaysData = daysData; 
 
   try {
     // Update the BestTour route in the database
     const route = await BestTourModel.findByIdAndUpdate(id, updateData, { new: true });
 
     if (route) {
-      // If images are updated, upload them to GitHub
-      const imageUploadPromises = [];
-
-      if (req.files && req.files.Imageu) {
-        imageUploadPromises.push(uploadImageToGitHub(req.files.Imageu[0]));  // Upload first image
-      }
-
-      if (req.files && req.files.Image1) {
-        imageUploadPromises.push(uploadImageToGitHub(req.files.Image1[0]));  // Upload second image
-      }
-
-      // Wait for the images to be uploaded
-      await Promise.all(imageUploadPromises);
-
       // Return the updated route data as a response
       res.json({ success: true, data: route });
     } else {
@@ -744,10 +722,9 @@ app.put("/bestroute/:id", upload.fields([{ name: 'Imageu', maxCount: 1 }, { name
     }
   } catch (error) {
     console.error('Error updating BestTour route:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to upload images to GitHub or update route data', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to update route data', error: error.message });
   }
 });
-
 
 
 app.delete("/deletebestroute/:id", (req, res) => {
@@ -764,20 +741,22 @@ app.delete("/deletebestroute/:id", (req, res) => {
 });
 
 
-app.get('/tourdetails/:id', (req, res) => {
-  const id = req.params.id;
-
-  BestTourModel.findById(id)  
+app.get('/tourdetails/:Tourno', (req, res) => {
+  const Tourno = req.params.Tourno;  
+  BestTourModel.findOne({ Tourno: Tourno })
     .then((tourDetails) => {
       if (tourDetails) {
-        res.json(tourDetails);
+        res.json(tourDetails); 
       } else {
-        res.status(404).json({ message: 'Tour not found' });
+        res.status(404).json({ message: 'Tour not found' }); 
       }
     })
     .catch((err) => {
-      res.status(500).json({ error: err.message });
+      console.error('Error during database query:', err); 
+      res.status(500).json({ error: 'Internal server error' });  
     });
 });
+
+
 
 app.listen(4040)
