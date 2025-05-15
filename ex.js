@@ -415,7 +415,7 @@ const BookingsSchema = new mongoose.Schema({
   Email: String,
   Price: Number,
   CarNamee: String,
-  No: Number,
+  // No: Number,
   Email2: String,
 
 
@@ -424,6 +424,8 @@ const BookingsSchema = new mongoose.Schema({
 const BookingModel = mongoose.model('booking', BookingsSchema)
 
 app.post('/Bookform', async (req, res) => {
+
+  console.log('Incoming form data:', req.body);
   try {
     let newBookModel = new BookingModel({
       Name: req.body.Name,
@@ -438,7 +440,7 @@ app.post('/Bookform', async (req, res) => {
       Route: req.body.Route,
       Price: req.body.Price,
       CarNamee: req.body.CarNamee,
-      No: req.body.No,
+      // No: req.body.No,
       Email2: req.body.Email2,
     });
 
@@ -450,17 +452,17 @@ app.post('/Bookform', async (req, res) => {
     const from = savedBooking.From;
     const to = savedBooking.To;
     const price = savedBooking.Price;
-    const Order = savedBooking.No;
+    // const Order = savedBooking.No;
     const PhoneN = savedBooking.Phone;
     const Date = savedBooking.Date;
     const Time = savedBooking.Time;
     const customerEmail = savedBooking.Email2;
-
+ // <p><strong>Your Booking Order ID is STO${Order}.</strong></p>
     const messageHtml = `
      <img src="https://onlinetaxi.co.in/Images/sidhu_travels-removebg-preview.png" alt="Online Taxi Logo" height="100"/>
       <p>Your booking is successfully confirmed!</p>
       <p>We are excited to serve you!</p>
-      <p><strong>Your Booking Order ID is STO${Order}.</strong></p>
+     
       <p>Name: ${customerName}<br/>
       Number: ${PhoneN}<br/>
       ${route} Booking with our comfortable.<br/>
